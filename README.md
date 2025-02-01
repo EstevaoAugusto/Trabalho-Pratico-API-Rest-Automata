@@ -2,7 +2,7 @@
 Trabalho Prático de Teoria da Computação: Construção de uma API REST Utilizando a Biblioteca Automata
 Projeto construido em Python.
 
-O projeto deve ser entregue até 18/02/2024. 
+O projeto deve ser entregue até 11/02/2025. 
 
 ## Bibliotecas Usadas
 
