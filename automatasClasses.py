@@ -28,4 +28,3 @@ class FiniteAutomataDeterministic(BaseModel):
     transitions: Dict[str, Dict[str, str]]
     initial_state: str
     final_states: Set[str]
-    allow_partial: bool

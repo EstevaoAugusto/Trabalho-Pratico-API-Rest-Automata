@@ -60,21 +60,16 @@ def validate_finite_automata_deterministic(finite: FiniteAutomataDeterministic):
     dfa = DFA(
         states = finite.states,
         input_symbols = finite.input_symbols,
-        tape_symbols = finite.tape_symbols,
         transitions = finite.transitions,
         initial_state = finite.initial_state,
-        blank_symbol = finite.blank_symbol,
         final_states = finite.final_states,
-        
     )
     
     return {
         "states": finite.states,
         "input_symbols": finite.input_symbols,
-        "tape_symbols": finite.tape_symbols,
         "transitions": finite.transitions,
         "initial_state": finite.initial_state,
-        "blank_symbol": finite.blank_symbol,
         "final_states": finite.final_states
     }
     
