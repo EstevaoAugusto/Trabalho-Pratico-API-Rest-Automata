@@ -39,32 +39,24 @@ Detalhes foram obtidas na [documentaçao do Pygraphviz](https://pygraphviz.githu
 
 ```json
 {
-  "states": ["q0", "q1", "q2", "q3", "q4"],
+  "states": ["q0", "q1", "q2"],
   "input_symbols": ["0", "1"],
-  "tape_symbols": ["0", "1", "x", "y", "."],
   "transitions": {
     "q0": {
-      "0": ["q1", "x", "R"],
-      "y": ["q3", "y", "R"]
+      "0": "q0",
+      "1": "q1"
     },
     "q1": {
-      "0": ["q1", "0", "R"],
-      "1": ["q2", "y", "L"],
-      "y": ["q1", "y", "R"]
+      "0": "q0",
+      "1": "q2"
     },
     "q2": {
-      "0": ["q2", "0", "L"],
-      "x": ["q0", "x", "R"],
-      "y": ["q2", "y", "L"]
-    },
-    "q3": {
-      "y": ["q3", "y", "R"],
-      ".": ["q4", ".", "R"]
+      "0": "q2",
+      "1": "q1"
     }
   },
   "initial_state": "q0",
-  "blank_symbol": ".",
-  "final_states": ["q4"]
+  "final_states": ["q1"]
 }
 ```
 
