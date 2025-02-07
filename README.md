@@ -31,3 +31,109 @@ python -m pip install --config-settings="--global-option=build_ext" --config-set
 ```
 
 Detalhes foram obtidas na [documentaçao do Pygraphviz](https://pygraphviz.github.io/documentation/stable/install.html#windows).
+
+## Exemplos em JSON
+
+
+### Automato Finito Deterministico (AFD)
+
+```json
+{
+  "states": ["q0", "q1", "q2", "q3", "q4"],
+  "input_symbols": ["0", "1"],
+  "tape_symbols": ["0", "1", "x", "y", "."],
+  "transitions": {
+    "q0": {
+      "0": ["q1", "x", "R"],
+      "y": ["q3", "y", "R"]
+    },
+    "q1": {
+      "0": ["q1", "0", "R"],
+      "1": ["q2", "y", "L"],
+      "y": ["q1", "y", "R"]
+    },
+    "q2": {
+      "0": ["q2", "0", "L"],
+      "x": ["q0", "x", "R"],
+      "y": ["q2", "y", "L"]
+    },
+    "q3": {
+      "y": ["q3", "y", "R"],
+      ".": ["q4", ".", "R"]
+    }
+  },
+  "initial_state": "q0",
+  "blank_symbol": ".",
+  "final_states": ["q4"]
+}
+```
+
+### Automato com Pilha Deterministica (APD)
+
+```json
+{
+  "states": ["q0", "q1", "q2", "q3"],
+  "input_symbols": ["a", "b"],
+  "stack_symbols": ["0", "1"],
+  "transitions": {
+    "q0": {
+      "a": {
+        "0": ["q1", ["1", "0"]]
+      }
+    },
+    "q1": {
+      "a": {
+        "1": ["q1", ["1", "1"]]
+      },
+      "b": {
+        "1": ["q2", ""]
+      }
+    },
+    "q2": {
+      "b": {
+        "1": ["q2", ""]
+      },
+      "": {
+        "0": ["q3", ["0"]]
+      }
+    }
+  },
+  "initial_state": "q0",
+  "initial_stack_symbol": "0",
+  "final_states": ["q3"],
+  "acceptance_mode": "final_state"
+}
+```
+
+### Maquina de Turing Deterministica (MTD)
+
+```json
+{
+  "states": ["q0", "q1", "q2", "q3", "q4"],
+  "input_symbols": ["0", "1"],
+  "tape_symbols": ["0", "1", "x", "y", "."],
+  "transitions": {
+    "q0": {
+      "0": ["q1", "x", "R"],
+      "y": ["q3", "y", "R"]
+    },
+    "q1": {
+      "0": ["q1", "0", "R"],
+      "1": ["q2", "y", "L"],
+      "y": ["q1", "y", "R"]
+    },
+    "q2": {
+      "0": ["q2", "0", "L"],
+      "x": ["q0", "x", "R"],
+      "y": ["q2", "y", "L"]
+    },
+    "q3": {
+      "y": ["q3", "y", "R"],
+      ".": ["q4", ".", "R"]
+    }
+  },
+  "initial_state": "q0",
+  "blank_symbol": ".",
+  "final_states": ["q4"]
+}
+```
