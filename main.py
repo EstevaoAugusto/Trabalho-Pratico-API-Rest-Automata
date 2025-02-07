@@ -1,6 +1,5 @@
-from typing import Union
+from typing import Dict, Union
 from fastapi import FastAPI
-from user import User
 
 from automata.tm.dtm import DTM # Importando maquina de turing deterministica
 from automata.tm.ntm import NTM # Importando maquina de turing nao deterministica
@@ -14,26 +13,15 @@ from automatasClasses import TuringMachine, PushdownAutomata, FiniteAutomataDete
 
 app = FastAPI()
 
+automata = {}
 
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
-
-@app.get("/soma/{x}/{y}")
-def soma(x: int, y: int):
-    return {"soma": str(x + y)}
-
-@app.post("/users/")
-def create_user(user: User):
-    return { "user_name": user.email, "user_email": user.email}
-
 @app.post("/turing/")
-def validate_turing_machine(turing: TuringMachine): 
+def validate_turing_machine(turing: TuringMachine, input_string: str): 
     dtm = DTM(
         states = turing.states,
         input_symbols = turing.input_symbols,
@@ -45,7 +33,9 @@ def validate_turing_machine(turing: TuringMachine):
         
     )
     
+    
     return {
+        "accepted": str(dtm.accepts_input(input_string)),
         "states": turing.states,
         "input_symbols": turing.input_symbols,
         "tape_symbols": turing.tape_symbols,
@@ -55,8 +45,9 @@ def validate_turing_machine(turing: TuringMachine):
         "final_states": turing.final_states
     }
 
-@app.post("/finite/")
-def validate_finite_automata_deterministic(finite: FiniteAutomataDeterministic): 
+@app.post("/create_dfa/")
+def create_dfa(finite: FiniteAutomataDeterministic): 
+    global automata
     dfa = DFA(
         states = finite.states,
         input_symbols = finite.input_symbols,
@@ -65,14 +56,24 @@ def validate_finite_automata_deterministic(finite: FiniteAutomataDeterministic):
         final_states = finite.final_states,
     )
     
-    return {
-        "states": finite.states,
-        "input_symbols": finite.input_symbols,
-        "transitions": finite.transitions,
-        "initial_state": finite.initial_state,
-        "final_states": finite.final_states
-    }
+    automata["dfa"] = dfa
+    print(automata["dfa"])
+
     
+    return { "mensagem": "DFA criado com sucesso"}
+
+@app.get("/test_dfa/")
+def test_dfa(input_string: str):
+    global automata
+    print(automata)
+    
+    dfa = automata.get("dfa")
+    if not dfa:
+        return {"error": "Nenhum DFA encontrado"}
+    
+    result = dfa.accepts_input(input_string)
+    return {"string": input_string, "accepted": result} 
+
 @app.post("/pushdown/")
 def validate_pushdown_automata(pushdown: PushdownAutomata): 
     dpda = DPDA(
@@ -81,7 +82,7 @@ def validate_pushdown_automata(pushdown: PushdownAutomata):
         stack_symbols = pushdown.stack_symbols,
         transitions = pushdown.transitions,
         initial_state = pushdown.initial_state,
-        initial_state_symbol = pushdown.initial_stack_symbol,
+        initial_stack_symbol = pushdown.initial_stack_symbol,
         final_states = pushdown.final_states,
         acceptance_mode = pushdown.acceptance_mode,
         
@@ -92,6 +93,7 @@ def validate_pushdown_automata(pushdown: PushdownAutomata):
         "input_symbols": pushdown.input_symbols,
         "stack_symbols": pushdown.stack_symbols,
         "transitions": pushdown.transitions,
+        "initial_stack_symbol": pushdown.initial_stack_symbol,
         "initial_state": pushdown.initial_state,
         "final_states": pushdown.final_states,
         "allow_partial": pushdown.allow_partial,
