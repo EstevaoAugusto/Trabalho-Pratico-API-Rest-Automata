@@ -1,6 +1,6 @@
-from typing import Dict, Union
-from fastapi import FastAPI
-
+from typing import Dict
+from fastapi import Depends, FastAPI
+import json
 from automata.tm.dtm import DTM # Importando maquina de turing deterministica
 from automata.tm.ntm import NTM # Importando maquina de turing nao deterministica
 from automata.pda.dpda import DPDA # Importando automata de pilha deterministica
@@ -13,7 +13,11 @@ from automatasClasses import TuringMachine, PushdownAutomata, FiniteAutomataDete
 
 app = FastAPI()
 
-automata = {}
+automata: Dict[str, DFA] = {}
+
+
+def get_automata():
+    return automata
 
 @app.get("/")
 def read_root():
@@ -46,8 +50,7 @@ def validate_turing_machine(turing: TuringMachine, input_string: str):
     }
 
 @app.post("/create_dfa/")
-def create_dfa(finite: FiniteAutomataDeterministic): 
-    global automata
+def create_dfa(finite: FiniteAutomataDeterministic, automata: Dict[str, DFA] = Depends(get_automata), chave : str = "dfa" + str(len(automata)+1)): 
     dfa = DFA(
         states = finite.states,
         input_symbols = finite.input_symbols,
@@ -56,23 +59,45 @@ def create_dfa(finite: FiniteAutomataDeterministic):
         final_states = finite.final_states,
     )
     
-    automata["dfa"] = dfa
-    print(automata["dfa"])
-
-    
+    automata[chave] = dfa
+        
     return { "mensagem": "DFA criado com sucesso"}
 
 @app.get("/test_dfa/")
-def test_dfa(input_string: str):
-    global automata
-    print(automata)
+def test_dfa(input_string: str, chave: str, automata: Dict[str, DFA] = Depends(get_automata)):
+    dfa = automata.get(chave)
     
-    dfa = automata.get("dfa")
     if not dfa:
         return {"error": "Nenhum DFA encontrado"}
     
     result = dfa.accepts_input(input_string)
-    return {"string": input_string, "accepted": result} 
+    
+    return {
+                "chave": chave,
+                "string": input_string, 
+                "accepted": result,
+                "states" : dfa.states,
+                "input_symbols" : dfa.input_symbols,
+                "transitions" : dfa.transitions,
+                "initial_state" : dfa.initial_state,
+                "final_states" : dfa.final_states,
+            }
+
+@app.get("/get_dfa/{chave}")
+def get_dfa(chave: str):    
+    dfa = automata.get(chave)
+
+    if dfa is None:
+        return { "error": f"Nenhum DFA foi encontrado com a chave '{chave}'"}
+    
+    return { 
+                "chave": chave,
+                "states" : dfa.states,
+                "input_symbols" : dfa.input_symbols,
+                "transitions" : dfa.transitions,
+                "initial_state" : dfa.initial_state,
+                "final_states" : dfa.final_states,
+            }
 
 @app.post("/pushdown/")
 def validate_pushdown_automata(pushdown: PushdownAutomata): 
