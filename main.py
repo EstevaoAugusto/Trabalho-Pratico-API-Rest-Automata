@@ -39,7 +39,62 @@ def create_deterministic_turing_machine(turing : TuringMachine, automata : Dict[
     
     return {  "mensagem" : "DTM criada com sucesso." }
 
+@app.get("/get_dtm/{chave}")
+def get_deterministic_turing_machine(chave : str):
+    dtm = automataDTM.get(chave)
+    
+    if dtm is None:
+        return { "error" : f"Nenhum DTM foi encontrado com a chave '{chave}'" }
+    
+    
+    return {
+        "chave" : chave,
+        "states" : dtm.states,
+        "input_symbols" : dtm.input_symbols,
+        "tape_symbols" : dtm.tape_symbols,
+        "transitions" : dtm.transitions,
+        "initial_state" : dtm.initial_state,
+        "blank_symbol" : dtm.blank_symbol,
+        "final_states" : dtm.final_states,
+    }
 
+@app.get("/get_all_dtm/")
+def get_all_deterministic_turing_machine():
+    return {key: {
+        "states": value.states,
+        "input_symbols": value.input_symbols,
+        "tape_symbols" : value.tape_symbols,
+        "transitions": value.transitions,
+        "initial_state": value.initial_state,
+        "blank_symbol" : value.blank_symbol,
+        "final_states": value.final_states,
+    } for key, value in automataDTM.items()}
+
+
+@app.get("/test_dtm/{chave}/{input_string}")
+def test_deterministic_turing_machine(input_string: str, chave: str, automata: Dict[str, DTM] = Depends(get_automataDTM)):
+    dtm = automata.get(chave)
+    
+    if dtm is None:
+        return {"error": "Nenhum DTM encontrado"}
+    
+    try:
+        result = dtm.accepts_input(input_string)
+    except Exception as e:
+        return {"error": f"Erro ao processar DFA: {str(e)}"}
+    
+    return {
+                "chave": chave,
+                "input_string" : input_string,
+                "accepted" : result,
+                "states" : dtm.states,
+                "input_symbols" : dtm.input_symbols,
+                "tape_symbols" : dtm.tape_symbols,
+                "transitions" : dtm.transitions,
+                "initial_state" : dtm.initial_state,
+                "blank_symbol" : dtm.blank_symbol,
+                "final_states" : dtm.final_states,
+            }
 
 @app.post("/create_dfa/")
 def create_deterministic_finite_automata(finite: FiniteAutomataDeterministic, automata: Dict[str, DFA] = Depends(get_automataDFA), chave : str = "dfa" + str(len(automataDFA)+1)): 
@@ -69,6 +124,7 @@ def test_dfa(input_string: str, chave: str, automata: Dict[str, DFA] = Depends(g
     
     return {
                 "chave": chave,
+                "input_string" : input_string,
                 "accepted" : result,
                 "states" : dfa.states,
                 "input_symbols" : dfa.input_symbols,
