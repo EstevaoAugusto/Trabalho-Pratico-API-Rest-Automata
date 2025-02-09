@@ -13,11 +13,11 @@ from automatasClasses import TuringMachine, PushdownAutomata, FiniteAutomataDete
 
 app = FastAPI()
 
-automata: Dict[str, DFA] = {}
+automataDFA: Dict[str, DFA] = {}
 
 
-def get_automata():
-    return automata
+def get_automataDFA():
+    return automataDFA
 
 @app.get("/")
 def read_root():
@@ -50,7 +50,7 @@ def validate_turing_machine(turing: TuringMachine, input_string: str):
     }
 
 @app.post("/create_dfa/")
-def create_dfa(finite: FiniteAutomataDeterministic, automata: Dict[str, DFA] = Depends(get_automata), chave : str = "dfa" + str(len(automata)+1)): 
+def create_dfa(finite: FiniteAutomataDeterministic, automata: Dict[str, DFA] = Depends(get_automataDFA), chave : str = "dfa" + str(len(automataDFA)+1)): 
     dfa = DFA(
         states = finite.states,
         input_symbols = finite.input_symbols,
@@ -60,22 +60,26 @@ def create_dfa(finite: FiniteAutomataDeterministic, automata: Dict[str, DFA] = D
     )
     
     automata[chave] = dfa
-        
+    
+    print(automata)
+    
     return { "mensagem": "DFA criado com sucesso"}
 
 @app.get("/test_dfa/")
-def test_dfa(input_string: str, chave: str, automata: Dict[str, DFA] = Depends(get_automata)):
+def test_dfa(input_string: str, chave: str, automata: Dict[str, DFA] = Depends(get_automataDFA)):
     dfa = automata.get(chave)
     
-    if not dfa:
+    if dfa is None:
         return {"error": "Nenhum DFA encontrado"}
     
-    result = dfa.accepts_input(input_string)
+    try:
+        result = dfa.accepts_input(input_string)
+    except Exception as e:
+        return {"error": f"Erro ao processar DFA: {str(e)}"}
     
     return {
                 "chave": chave,
-                "string": input_string, 
-                "accepted": result,
+                "accepted" : result,
                 "states" : dfa.states,
                 "input_symbols" : dfa.input_symbols,
                 "transitions" : dfa.transitions,
@@ -85,7 +89,7 @@ def test_dfa(input_string: str, chave: str, automata: Dict[str, DFA] = Depends(g
 
 @app.get("/get_dfa/{chave}")
 def get_dfa(chave: str):    
-    dfa = automata.get(chave)
+    dfa = automataDFA.get(chave)
 
     if dfa is None:
         return { "error": f"Nenhum DFA foi encontrado com a chave '{chave}'"}
