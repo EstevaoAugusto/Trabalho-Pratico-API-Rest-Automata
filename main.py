@@ -14,18 +14,16 @@ from automatasClasses import TuringMachine, PushdownAutomata, FiniteAutomataDete
 app = FastAPI()
 
 automataDFA: Dict[str, DFA] = {}
+automataDTM: Dict[str, DTM] = {}
 
+def get_automataDTM():
+    return automataDTM
 
 def get_automataDFA():
     return automataDFA
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
-@app.post("/turing/")
-def validate_turing_machine(turing: TuringMachine, input_string: str): 
+@app.post("/create_dtm/")
+def create_deterministic_turing_machine(turing : TuringMachine, automata : Dict[str, DTM] = Depends(get_automataDTM), chave : str = "dtm1"): 
     dtm = DTM(
         states = turing.states,
         input_symbols = turing.input_symbols,
@@ -37,20 +35,14 @@ def validate_turing_machine(turing: TuringMachine, input_string: str):
         
     )
     
+    automata[chave] = dtm
     
-    return {
-        "accepted": str(dtm.accepts_input(input_string)),
-        "states": turing.states,
-        "input_symbols": turing.input_symbols,
-        "tape_symbols": turing.tape_symbols,
-        "transitions": turing.transitions,
-        "initial_state": turing.initial_state,
-        "blank_symbol": turing.blank_symbol,
-        "final_states": turing.final_states
-    }
+    return {  "mensagem" : "DTM criada com sucesso." }
+
+
 
 @app.post("/create_dfa/")
-def create_dfa(finite: FiniteAutomataDeterministic, automata: Dict[str, DFA] = Depends(get_automataDFA), chave : str = "dfa" + str(len(automataDFA)+1)): 
+def create_deterministic_finite_automata(finite: FiniteAutomataDeterministic, automata: Dict[str, DFA] = Depends(get_automataDFA), chave : str = "dfa" + str(len(automataDFA)+1)): 
     dfa = DFA(
         states = finite.states,
         input_symbols = finite.input_symbols,
