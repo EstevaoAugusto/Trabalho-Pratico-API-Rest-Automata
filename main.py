@@ -60,9 +60,7 @@ def create_dfa(finite: FiniteAutomataDeterministic, automata: Dict[str, DFA] = D
     )
     
     automata[chave] = dfa
-    
-    print(automata)
-    
+        
     return { "mensagem": "DFA criado com sucesso"}
 
 @app.get("/test_dfa/")
@@ -102,6 +100,16 @@ def get_dfa(chave: str):
                 "initial_state" : dfa.initial_state,
                 "final_states" : dfa.final_states,
             }
+
+@app.get("/get_all_dfa/")
+def get_all_dfa():
+    return {key: {
+        "states": value.states,
+        "input_symbols": value.input_symbols,
+        "transitions": value.transitions,
+        "initial_state": value.initial_state,
+        "final_states": value.final_states
+    } for key, value in automataDFA.items()}
 
 @app.post("/pushdown/")
 def validate_pushdown_automata(pushdown: PushdownAutomata): 
