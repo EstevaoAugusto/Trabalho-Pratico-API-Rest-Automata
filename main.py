@@ -15,6 +15,10 @@ app = FastAPI()
 
 automataDFA: Dict[str, DFA] = {}
 automataDTM: Dict[str, DTM] = {}
+automataDPDA: Dict[str, DPDA] = {}
+
+def get_automataDPDA():
+    return automataDPDA
 
 def get_automataDTM():
     return automataDTM
@@ -110,7 +114,7 @@ def create_deterministic_finite_automata(finite: FiniteAutomataDeterministic, au
         
     return { "mensagem": "DFA criado com sucesso"}
 
-@app.get("/test_dfa/")
+@app.get("/test_dfa/{chave}/{input_string}")
 def test_dfa(input_string: str, chave: str, automata: Dict[str, DFA] = Depends(get_automataDFA)):
     dfa = automata.get(chave)
     
@@ -159,8 +163,8 @@ def get_all_dfa():
         "final_states": value.final_states
     } for key, value in automataDFA.items()}
 
-@app.post("/pushdown/")
-def validate_pushdown_automata(pushdown: PushdownAutomata): 
+@app.post("/create_pushdown/")
+def create_pushdown_automata(pushdown: PushdownAutomata, automata: Dict[str, DPDA] = Depends(get_automataDPDA), chave: str = "DPDA1"): 
     dpda = DPDA(
         states = pushdown.states,
         input_symbols = pushdown.input_symbols,
@@ -170,16 +174,9 @@ def validate_pushdown_automata(pushdown: PushdownAutomata):
         initial_stack_symbol = pushdown.initial_stack_symbol,
         final_states = pushdown.final_states,
         acceptance_mode = pushdown.acceptance_mode,
-        
     )
     
-    return {
-        "states": pushdown.states,
-        "input_symbols": pushdown.input_symbols,
-        "stack_symbols": pushdown.stack_symbols,
-        "transitions": pushdown.transitions,
-        "initial_stack_symbol": pushdown.initial_stack_symbol,
-        "initial_state": pushdown.initial_state,
-        "final_states": pushdown.final_states,
-        "allow_partial": pushdown.allow_partial,
-    }
+    automata[chave] = dpda
+    
+    return { "mensagem" : "DPDA criado com sucesso"}
+
