@@ -1,6 +1,7 @@
 from typing import Dict
 from fastapi import Depends, FastAPI
 import os
+import pygraphviz as pgv
 from automata.tm.dtm import DTM # Importando maquina de turing deterministica
 from automata.tm.ntm import NTM # Importando maquina de turing nao deterministica
 from automata.pda.dpda import DPDA # Importando automata de pilha deterministica
@@ -27,6 +28,10 @@ def get_automataDTM():
 def get_automataDFA():
     return automataDFA
 
+@app.get("/")
+def root():
+    return { "Hello" : "World" }
+
 @app.post("/create_dtm/")
 def create_deterministic_turing_machine(turing : TuringMachine, automata : Dict[str, DTM] = Depends(get_automataDTM), chave : str = "dtm1"): 
     dtm = DTM(
@@ -41,7 +46,7 @@ def create_deterministic_turing_machine(turing : TuringMachine, automata : Dict[
     )
     
     automata[chave] = dtm
-    
+        
     return {  "mensagem" : "DTM criada com sucesso." }
 
 @app.get("/get_dtm/{chave}")
@@ -110,15 +115,35 @@ def create_diagram_of_deterministic_turing_machine(nomeDiagram : str = "maquinaT
         return { "error" : "O nome do diagrama nao termina com .png "}
     
     dtm = automata[chave]
-    
+        
     if not dtm: # caso 
         return { "error" : f"Não existe DTM com a chave '{chave}'"}
     
-    dtm.show_diagram(path=imagePath + nomeDiagram)
+    # Criar o grafo com PyGraphviz
+    graph = pgv.AGraph(strict=False, directed=True)
+    
+    # Adicionar os estados ao grafo
+    for state in dtm.states:
+        if state in dtm.final_states:
+            graph.add_node(state, shape='doublecircle')  # Estado de aceitação
+        elif state == dtm.initial_state:
+            graph.add_node(state, shape='circle', style="filled", fillcolor="lightblue")  # Estado de rejeição
+        else:
+            graph.add_node(state, shape='circle')
+    
+    # Adicionar transições ao grafo
+    for (start_state, transition) in dtm.transitions.items():
+        for (read_symbol, symbols_list) in transition.items():
+                graph.add_edge(start_state, symbols_list[0], label=f'{read_symbol} -> {symbols_list[1]}, {symbols_list[2]}')
+    
+    # Gerar o diagrama e salvar em um arquivo PNG
+    graph.layout(prog='dot')  # Usa o layout 'dot' do Graphviz para gerar o gráfico
+    
+    caminho_completo = os.path.join(imagePath, nomeDiagram)
+    graph.draw(caminho_completo)
     
     return { 
-                "mensagem" : f"O diagrama {nomeDiagram} foi gerado com sucesso.",
-                "local das imagens" : imagePath 
+                "mensagem" : f"O DTM foi gerado com sucesso. Veja em '{caminho_completo}'",
             }
 
 @app.post("/create_dfa/")
