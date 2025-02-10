@@ -3,9 +3,7 @@ from fastapi import Depends, FastAPI
 import os
 import pygraphviz as pgv
 from automata.tm.dtm import DTM # Importando maquina de turing deterministica
-from automata.tm.ntm import NTM # Importando maquina de turing nao deterministica
 from automata.pda.dpda import DPDA # Importando automata de pilha deterministica
-from automata.pda.npda import NPDA # Importando automata de pilha nao deterministica
 from automata.fa.dfa import DFA # Importando automata finito deterministico
 
 
@@ -15,9 +13,11 @@ from automatasClasses import TuringMachine, PushdownAutomata, FiniteAutomataDete
 app = FastAPI()
 
 imagePath = "./images/"
-automataDFA: Dict[str, DFA] = {}
-automataDTM: Dict[str, DTM] = {}
-automataDPDA: Dict[str, DPDA] = {}
+
+# as variaveis abaixo sao dicionarios para cada um dos automatos do trabalho
+automataDFA: Dict[str, DFA] = {} # automato finito deterministico
+automataDTM: Dict[str, DTM] = {} # maquina de turing deterministica
+automataDPDA: Dict[str, DPDA] = {} # maquina de pilha deterministica
 
 def get_automataDPDA():
     return automataDPDA
@@ -28,13 +28,17 @@ def get_automataDTM():
 def get_automataDFA():
     return automataDFA
 
+# Rota inicial
+# Serve para indicar que o projeto esta rodando
 @app.get("/")
 def root():
     return { "Hello" : "World" }
 
+#Rota de criação de maquinas de turing deterministicas
 @app.post("/create_dtm/")
 def create_deterministic_turing_machine(turing : TuringMachine, automata : Dict[str, DTM] = Depends(get_automataDTM), chave : str = "dtm1"): 
-    dtm = DTM(
+    # turing é uma variavel que recebe um json do usuário
+    dtm = DTM( # uma maquina de turing é instanciada a partir dos dados do json
         states = turing.states,
         input_symbols = turing.input_symbols,
         tape_symbols = turing.tape_symbols,
@@ -45,15 +49,16 @@ def create_deterministic_turing_machine(turing : TuringMachine, automata : Dict[
         
     )
     
-    automata[chave] = dtm
+    automata[chave] = dtm # dtm é inserido no dicionario
         
     return {  "mensagem" : "DTM criada com sucesso." }
 
+# Rota para obter uma maquina de turing deterministica (DTM) especifica a partir de uma chave
 @app.get("/get_dtm/{chave}")
 def get_deterministic_turing_machine(chave : str):
-    dtm = automataDTM.get(chave)
+    dtm = automataDTM.get(chave) # obtem DTM a partir da chave
     
-    if dtm is None:
+    if dtm is None: #
         return { "error" : f"Nenhum DTM foi encontrado com a chave '{chave}'" }
     
     
@@ -68,6 +73,7 @@ def get_deterministic_turing_machine(chave : str):
         "final_states" : dtm.final_states,
     }
 
+# Rota para obter todos os automotos finitos deterministicos(DTM) do dicionario
 @app.get("/get_all_dtm/")
 def get_all_deterministic_turing_machine():
     return {key: {
@@ -80,7 +86,7 @@ def get_all_deterministic_turing_machine():
         "final_states": value.final_states,
     } for key, value in automataDTM.items()}
 
-
+# Rota de testar um string a partir da DTM escolhida por chave
 @app.get("/test_dtm/{chave}/{input_string}")
 def test_deterministic_turing_machine(input_string: str, chave: str, automata: Dict[str, DTM] = Depends(get_automataDTM)):
     dtm = automata.get(chave)
@@ -106,17 +112,18 @@ def test_deterministic_turing_machine(input_string: str, chave: str, automata: D
                 "final_states" : dtm.final_states,
             }
 
+# Rota que cria diagrama de maquina de turing deterministica
 @app.post("/create_diagram_dtm/")
 def create_diagram_of_deterministic_turing_machine(nomeDiagram : str = "maquinaTuring.png", automata: Dict[str, DTM] = Depends(get_automataDTM), chave : str = "dtm1"):
     if not os.path.exists(imagePath): # caso a pasta images nao existir
-        os.makedirs(imagePath)
+        os.makedirs(imagePath) # a pasta images é criada
     
-    if not nomeDiagram.endswith(".png"):
+    if not nomeDiagram.endswith(".png"): # caso o nome do diagrama nao termine com .png, a rota cessa funcionamento
         return { "error" : "O nome do diagrama nao termina com .png "}
     
-    dtm = automata[chave]
+    dtm = automata.get(chave)
         
-    if not dtm: # caso 
+    if dtm is None:
         return { "error" : f"Não existe DTM com a chave '{chave}'"}
     
     # Criar o grafo com PyGraphviz
@@ -146,8 +153,9 @@ def create_diagram_of_deterministic_turing_machine(nomeDiagram : str = "maquinaT
                 "mensagem" : f"O DTM foi gerado com sucesso. Veja em '{caminho_completo}'",
             }
 
+# Rota que cria o automato finito deterministico
 @app.post("/create_dfa/")
-def create_deterministic_finite_automata(finite: FiniteAutomataDeterministic, automata: Dict[str, DFA] = Depends(get_automataDFA), chave : str = "dfa" + str(len(automataDFA)+1)): 
+def create_deterministic_finite_automata(finite: FiniteAutomataDeterministic, automata: Dict[str, DFA] = Depends(get_automataDFA), chave : str = "dfa1"): 
     dfa = DFA(
         states = finite.states,
         input_symbols = finite.input_symbols,
@@ -160,6 +168,7 @@ def create_deterministic_finite_automata(finite: FiniteAutomataDeterministic, au
         
     return { "mensagem": "DFA criado com sucesso"}
 
+# Rota que testa o automato finito deterministico a partir de uma string
 @app.get("/test_dfa/{chave}/{input_string}")
 def test_deterministic_finite_automata(input_string: str, chave: str, automata: Dict[str, DFA] = Depends(get_automataDFA)):
     dfa = automata.get(chave)
@@ -183,6 +192,7 @@ def test_deterministic_finite_automata(input_string: str, chave: str, automata: 
                 "final_states" : dfa.final_states,
             }
 
+# Rota que visualiza um automato finito deterministico especifico
 @app.get("/get_dfa/{chave}")
 def get_deterministic_finite_automata(chave: str):    
     dfa = automataDFA.get(chave)
@@ -199,6 +209,7 @@ def get_deterministic_finite_automata(chave: str):
                 "final_states" : dfa.final_states,
             }
 
+# Rota que visualiza todos os automatos finitos deterministicos
 @app.get("/get_all_dfa/")
 def get_all_deterministic_finite_automata():
     return {key: {
@@ -209,6 +220,7 @@ def get_all_deterministic_finite_automata():
         "final_states": value.final_states
     } for key, value in automataDFA.items()}
 
+# Rota que cria o diagrama do automato finito deterministico
 @app.post("/create_diagram_dfa/")
 def create_diagram_of_deterministic_finite_automata(nomeDiagram : str = "automatoFinitoDeterministico.png", automata: Dict[str, DFA] = Depends(get_automataDFA), chave : str = "dfa1"):
     if not os.path.exists(imagePath): # caso a pasta images nao existir
@@ -222,12 +234,14 @@ def create_diagram_of_deterministic_finite_automata(nomeDiagram : str = "automat
     if dfa is None: # caso o dfa nao exista no automataDFA
         return { "error" : f"Não existe DTM com a chave '{chave}'"}
     
-    dfa.show_diagram(path=imagePath + nomeDiagram)
+    caminho_completo = os.path.join(imagePath, nomeDiagram)
+    dfa.show_diagram(path=caminho_completo)
     
     return { 
-                "mensagem" : f"O DFA foi gerado com sucesso. Veja em '{imagePath + "/" + nomeDiagram}'",
+                "mensagem" : f"O DFA foi gerado com sucesso. Veja em '{caminho_completo}'",
             }
 
+# Rota que cria uma maquina com pilha deterministica
 @app.post("/create_pushdown/")
 def create_pushdown_automata(pushdown: PushdownAutomata, automata: Dict[str, DPDA] = Depends(get_automataDPDA), chave: str = "dpda1"): 
     dpda = DPDA(
@@ -245,6 +259,7 @@ def create_pushdown_automata(pushdown: PushdownAutomata, automata: Dict[str, DPD
     
     return { "mensagem" : "DPDA criado com sucesso"}
 
+# Rota que visualiza maquina com pilha deterministica especifica
 @app.get("/get_pushdown/{chave}")
 def get_pushdown_automata(chave : str):
     dpda = automataDPDA.get(chave)
@@ -263,7 +278,8 @@ def get_pushdown_automata(chave : str):
         "final_states" : dpda.final_states,
         "acceptance_mode" : dpda.acceptance_mode,
     }
-    
+
+# Rota que visualiza todas as maquinas com pilha deterministicas disponiveis
 @app.get("/get_all_pushdown")
 def get_all_pushdown_automata():
     return{key : {
@@ -276,7 +292,8 @@ def get_all_pushdown_automata():
         "final_states" : value.final_states,
         "acceptance_mode" : value.acceptance_mode,
     } for key, value in automataDPDA.items()}
-    
+
+# Rota que testa maquina com pilha deterministica com uma string
 @app.get("/test_pushdown/{chave}/{input_string}")
 def test_pushdown_automata(input_string: str, chave: str, automata: Dict[str, DPDA] = Depends(get_automataDPDA)):
     dpda = automata.get(chave)
@@ -303,6 +320,7 @@ def test_pushdown_automata(input_string: str, chave: str, automata: Dict[str, DP
                 "acceptance_mode" : dpda.acceptance_mode,
             }
 
+# Rota que cria diagrama para a maquina com pilha deterministica
 @app.post("/create_diagram_pushdown/")
 def create_diagram_of_pushdown_automata(nomeDiagram : str = "automatoComPilha.png", automata: Dict[str, DPDA] = Depends(get_automataDPDA), chave : str = "dpda1"):
     if not os.path.exists(imagePath): # caso a pasta images nao existir
@@ -316,8 +334,9 @@ def create_diagram_of_pushdown_automata(nomeDiagram : str = "automatoComPilha.pn
     if dpda is None: # caso o dfa nao exista no automataDFA
         return { "error" : f"Não existe DPDA com a chave '{chave}'"}
     
-    dpda.show_diagram(path=imagePath + nomeDiagram)
+    caminho_completo = os.path.join(imagePath, nomeDiagram)
+    dpda.show_diagram(path=caminho_completo)
     
     return { 
-                "mensagem" : f"O diagrama DPDA foi gerado com sucesso. Veja em '{imagePath + "/" + nomeDiagram}'",
+                "mensagem" : f"O diagrama DPDA foi gerado com sucesso. Veja em '{caminho_completo}'",
             }
