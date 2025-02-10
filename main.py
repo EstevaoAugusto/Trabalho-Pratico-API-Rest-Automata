@@ -1,6 +1,6 @@
 from typing import Dict
 from fastapi import Depends, FastAPI
-import json
+import os
 from automata.tm.dtm import DTM # Importando maquina de turing deterministica
 from automata.tm.ntm import NTM # Importando maquina de turing nao deterministica
 from automata.pda.dpda import DPDA # Importando automata de pilha deterministica
@@ -13,6 +13,7 @@ from automatasClasses import TuringMachine, PushdownAutomata, FiniteAutomataDete
 
 app = FastAPI()
 
+imagePath = "./images/"
 automataDFA: Dict[str, DFA] = {}
 automataDTM: Dict[str, DTM] = {}
 automataDPDA: Dict[str, DPDA] = {}
@@ -100,6 +101,26 @@ def test_deterministic_turing_machine(input_string: str, chave: str, automata: D
                 "final_states" : dtm.final_states,
             }
 
+@app.post("/create_diagram_dtm/")
+def create_diagram_of_deterministic_turing_machine(nomeDiagram : str = "maquinaTuring.png", automata: Dict[str, DTM] = Depends(get_automataDTM), chave : str = "dtm1"):
+    if not os.path.exists(imagePath): # caso a pasta images nao existir
+        os.makedirs(imagePath)
+    
+    if not nomeDiagram.endswith(".png"):
+        return { "error" : "O nome do diagrama nao termina com .png "}
+    
+    dtm = automata[chave]
+    
+    if not dtm: # caso 
+        return { "error" : f"Não existe DTM com a chave '{chave}'"}
+    
+    dtm.show_diagram(path=imagePath + nomeDiagram)
+    
+    return { 
+                "mensagem" : f"O diagrama {nomeDiagram} foi gerado com sucesso.",
+                "local das imagens" : imagePath 
+            }
+
 @app.post("/create_dfa/")
 def create_deterministic_finite_automata(finite: FiniteAutomataDeterministic, automata: Dict[str, DFA] = Depends(get_automataDFA), chave : str = "dfa" + str(len(automataDFA)+1)): 
     dfa = DFA(
@@ -115,7 +136,7 @@ def create_deterministic_finite_automata(finite: FiniteAutomataDeterministic, au
     return { "mensagem": "DFA criado com sucesso"}
 
 @app.get("/test_dfa/{chave}/{input_string}")
-def test_dfa(input_string: str, chave: str, automata: Dict[str, DFA] = Depends(get_automataDFA)):
+def test_deterministic_finite_automata(input_string: str, chave: str, automata: Dict[str, DFA] = Depends(get_automataDFA)):
     dfa = automata.get(chave)
     
     if dfa is None:
@@ -138,7 +159,7 @@ def test_dfa(input_string: str, chave: str, automata: Dict[str, DFA] = Depends(g
             }
 
 @app.get("/get_dfa/{chave}")
-def get_dfa(chave: str):    
+def get_deterministic_finite_automata(chave: str):    
     dfa = automataDFA.get(chave)
 
     if dfa is None:
@@ -154,7 +175,7 @@ def get_dfa(chave: str):
             }
 
 @app.get("/get_all_dfa/")
-def get_all_dfa():
+def get_all_deterministic_finite_automata():
     return {key: {
         "states": value.states,
         "input_symbols": value.input_symbols,
@@ -163,8 +184,27 @@ def get_all_dfa():
         "final_states": value.final_states
     } for key, value in automataDFA.items()}
 
+@app.post("/create_diagram_dfa/")
+def create_diagram_of_deterministic_finite_automata(nomeDiagram : str = "automatoFinitoDeterministico.png", automata: Dict[str, DFA] = Depends(get_automataDFA), chave : str = "dfa1"):
+    if not os.path.exists(imagePath): # caso a pasta images nao existir
+        os.makedirs(imagePath)
+    
+    if not nomeDiagram.endswith(".png"):
+        return { "error" : "O nome do diagrama nao termina com .png "}
+    
+    dfa = automata.get(chave)
+    
+    if dfa is None: # caso o dfa nao exista no automataDFA
+        return { "error" : f"Não existe DTM com a chave '{chave}'"}
+    
+    dfa.show_diagram(path=imagePath + nomeDiagram)
+    
+    return { 
+                "mensagem" : f"O DFA foi gerado com sucesso. Veja em '{imagePath + "/" + nomeDiagram}'",
+            }
+
 @app.post("/create_pushdown/")
-def create_pushdown_automata(pushdown: PushdownAutomata, automata: Dict[str, DPDA] = Depends(get_automataDPDA), chave: str = "DPDA1"): 
+def create_pushdown_automata(pushdown: PushdownAutomata, automata: Dict[str, DPDA] = Depends(get_automataDPDA), chave: str = "dpda1"): 
     dpda = DPDA(
         states = pushdown.states,
         input_symbols = pushdown.input_symbols,
@@ -212,8 +252,8 @@ def get_all_pushdown_automata():
         "acceptance_mode" : value.acceptance_mode,
     } for key, value in automataDPDA.items()}
     
-@app.post("/test_pushdown/{chave}/{input_string}")
-def test_dfa(input_string: str, chave: str, automata: Dict[str, DPDA] = Depends(get_automataDPDA)):
+@app.get("/test_pushdown/{chave}/{input_string}")
+def test_pushdown_automata(input_string: str, chave: str, automata: Dict[str, DPDA] = Depends(get_automataDPDA)):
     dpda = automata.get(chave)
     
     if dpda is None:
@@ -236,4 +276,23 @@ def test_dfa(input_string: str, chave: str, automata: Dict[str, DPDA] = Depends(
                 "initial_stack_symbol" : dpda.initial_stack_symbol,
                 "final_states" : dpda.final_states,
                 "acceptance_mode" : dpda.acceptance_mode,
+            }
+
+@app.post("/create_diagram_pushdown/")
+def create_diagram_of_pushdown_automata(nomeDiagram : str = "automatoComPilha.png", automata: Dict[str, DPDA] = Depends(get_automataDPDA), chave : str = "dpda1"):
+    if not os.path.exists(imagePath): # caso a pasta images nao existir
+        os.makedirs(imagePath)
+    
+    if not nomeDiagram.endswith(".png"):
+        return { "error" : "O nome do diagrama nao termina com .png "}
+    
+    dpda = automata.get(chave)
+    
+    if dpda is None: # caso o dfa nao exista no automataDFA
+        return { "error" : f"Não existe DPDA com a chave '{chave}'"}
+    
+    dpda.show_diagram(path=imagePath + nomeDiagram)
+    
+    return { 
+                "mensagem" : f"O diagrama DPDA foi gerado com sucesso. Veja em '{imagePath + "/" + nomeDiagram}'",
             }
