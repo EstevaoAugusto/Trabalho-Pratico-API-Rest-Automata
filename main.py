@@ -180,3 +180,60 @@ def create_pushdown_automata(pushdown: PushdownAutomata, automata: Dict[str, DPD
     
     return { "mensagem" : "DPDA criado com sucesso"}
 
+@app.get("/get_pushdown/{chave}")
+def get_pushdown_automata(chave : str):
+    dpda = automataDPDA.get(chave)
+    
+    if dpda is None:
+        return { "error" : "Automato com Pilha Deterministica não encontrado" }
+    
+    return {
+        "chave" : chave,
+        "states" : dpda.states,
+        "input_symbols" : dpda.input_symbols,
+        "stack_symbols" : dpda.stack_symbols,
+        "transitions" : dpda.transitions,
+        "initial_state" : dpda.initial_state,
+        "initial_state_symbol" : dpda.initial_stack_symbol,
+        "final_states" : dpda.final_states,
+        "acceptance_mode" : dpda.acceptance_mode,
+    }
+    
+@app.get("/get_all_pushdown")
+def get_all_pushdown_automata():
+    return{key : {
+        "states" : value.states,
+        "input_symbols" : value.input_symbols,
+        "stack_symbols" : value.stack_symbols,
+        "transitions" : value.transitions,
+        "initial_state" : value.initial_state,
+        "initial_state_symbol" : value.initial_stack_symbol,
+        "final_states" : value.final_states,
+        "acceptance_mode" : value.acceptance_mode,
+    } for key, value in automataDPDA.items()}
+    
+@app.post("/test_pushdown/{chave}/{input_string}")
+def test_dfa(input_string: str, chave: str, automata: Dict[str, DPDA] = Depends(get_automataDPDA)):
+    dpda = automata.get(chave)
+    
+    if dpda is None:
+        return {"error": "Nenhum DPDA encontrado"}
+    
+    try:
+        result = dpda.accepts_input(input_string)
+    except Exception as e:
+        return {"error": f"Erro ao processar DPDA: {str(e)}"}
+    
+    return {
+                "chave": chave,
+                "input_string" : input_string,
+                "accepted" : result,
+                "states" : dpda.states,
+                "input_symbols" : dpda.input_symbols,
+                "stack_symbols" : dpda.stack_symbols,
+                "transitions" : dpda.transitions,
+                "initial_state" : dpda.initial_state,
+                "initial_stack_symbol" : dpda.initial_stack_symbol,
+                "final_states" : dpda.final_states,
+                "acceptance_mode" : dpda.acceptance_mode,
+            }
