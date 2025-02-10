@@ -1,6 +1,7 @@
 from typing import Dict
 from fastapi import Depends, FastAPI
 import os
+import json
 import pygraphviz as pgv
 from automata.tm.dtm import DTM # Importando maquina de turing deterministica
 from automata.pda.dpda import DPDA # Importando automata de pilha deterministica
@@ -12,12 +13,19 @@ from automatasClasses import TuringMachine, PushdownAutomata, FiniteAutomataDete
 
 app = FastAPI()
 
-imagePath = "./images/"
+IMAGE_PATH = "./images/"
+JSON_PATH = "./json/"
 
 # as variaveis abaixo sao dicionarios para cada um dos automatos do trabalho
 automataDFA: Dict[str, DFA] = {} # automato finito deterministico
 automataDTM: Dict[str, DTM] = {} # maquina de turing deterministica
 automataDPDA: Dict[str, DPDA] = {} # maquina de pilha deterministica
+
+automataData = {
+    "DFA" : automataDFA,
+    "DTM" : automataDTM,
+    "DPDA" : automataDPDA,
+}
 
 def get_automataDPDA():
     return automataDPDA
@@ -115,8 +123,8 @@ def test_deterministic_turing_machine(input_string: str, chave: str, automata: D
 # Rota que cria diagrama de maquina de turing deterministica
 @app.post("/create_diagram_dtm/")
 def create_diagram_of_deterministic_turing_machine(nomeDiagram : str = "maquinaTuring.png", automata: Dict[str, DTM] = Depends(get_automataDTM), chave : str = "dtm1"):
-    if not os.path.exists(imagePath): # caso a pasta images nao existir
-        os.makedirs(imagePath) # a pasta images é criada
+    if not os.path.exists(IMAGE_PATH): # caso a pasta images nao existir
+        os.makedirs(IMAGE_PATH) # a pasta images é criada
     
     if not nomeDiagram.endswith(".png"): # caso o nome do diagrama nao termine com .png, a rota cessa funcionamento
         return { "error" : "O nome do diagrama nao termina com .png "}
@@ -134,19 +142,22 @@ def create_diagram_of_deterministic_turing_machine(nomeDiagram : str = "maquinaT
         if state in dtm.final_states:
             graph.add_node(state, shape='doublecircle')  # Estado de aceitação
         elif state == dtm.initial_state:
-            graph.add_node(state, shape='circle', style="filled", fillcolor="lightblue")  # Estado de rejeição
+            graph.add_node(state, shape='circle', style="filled", fillcolor="lightblue")  # Estado Inicial
         else:
-            graph.add_node(state, shape='circle')
+            graph.add_node(state, shape='circle') # Estado de Rejeicao
     
     # Adicionar transições ao grafo
     for (start_state, transition) in dtm.transitions.items():
         for (read_symbol, symbols_list) in transition.items():
-                graph.add_edge(start_state, symbols_list[0], label=f'{read_symbol} -> {symbols_list[1]}, {symbols_list[2]}')
+            # symbols_list[0] = end_state
+            # symbols_list[1] = write_symbol
+            # symbols_list[2] = direction
+            graph.add_edge(start_state, symbols_list[0], label=f'{read_symbol} -> {symbols_list[1]}, {symbols_list[2]}')
     
     # Gerar o diagrama e salvar em um arquivo PNG
     graph.layout(prog='dot')  # Usa o layout 'dot' do Graphviz para gerar o gráfico
     
-    caminho_completo = os.path.join(imagePath, nomeDiagram)
+    caminho_completo = os.path.join(IMAGE_PATH, nomeDiagram)
     graph.draw(caminho_completo)
     
     return { 
@@ -223,8 +234,8 @@ def get_all_deterministic_finite_automata():
 # Rota que cria o diagrama do automato finito deterministico
 @app.post("/create_diagram_dfa/")
 def create_diagram_of_deterministic_finite_automata(nomeDiagram : str = "automatoFinitoDeterministico.png", automata: Dict[str, DFA] = Depends(get_automataDFA), chave : str = "dfa1"):
-    if not os.path.exists(imagePath): # caso a pasta images nao existir
-        os.makedirs(imagePath)
+    if not os.path.exists(IMAGE_PATH): # caso a pasta images nao existir
+        os.makedirs(IMAGE_PATH)
     
     if not nomeDiagram.endswith(".png"):
         return { "error" : "O nome do diagrama nao termina com .png "}
@@ -234,7 +245,7 @@ def create_diagram_of_deterministic_finite_automata(nomeDiagram : str = "automat
     if dfa is None: # caso o dfa nao exista no automataDFA
         return { "error" : f"Não existe DTM com a chave '{chave}'"}
     
-    caminho_completo = os.path.join(imagePath, nomeDiagram)
+    caminho_completo = os.path.join(IMAGE_PATH, nomeDiagram)
     dfa.show_diagram(path=caminho_completo)
     
     return { 
@@ -323,8 +334,8 @@ def test_pushdown_automata(input_string: str, chave: str, automata: Dict[str, DP
 # Rota que cria diagrama para a maquina com pilha deterministica
 @app.post("/create_diagram_pushdown/")
 def create_diagram_of_pushdown_automata(nomeDiagram : str = "automatoComPilha.png", automata: Dict[str, DPDA] = Depends(get_automataDPDA), chave : str = "dpda1"):
-    if not os.path.exists(imagePath): # caso a pasta images nao existir
-        os.makedirs(imagePath)
+    if not os.path.exists(IMAGE_PATH): # caso a pasta images nao existir
+        os.makedirs(IMAGE_PATH)
     
     if not nomeDiagram.endswith(".png"):
         return { "error" : "O nome do diagrama nao termina com .png "}
@@ -334,9 +345,46 @@ def create_diagram_of_pushdown_automata(nomeDiagram : str = "automatoComPilha.pn
     if dpda is None: # caso o dfa nao exista no automataDFA
         return { "error" : f"Não existe DPDA com a chave '{chave}'"}
     
-    caminho_completo = os.path.join(imagePath, nomeDiagram)
+    caminho_completo = os.path.join(IMAGE_PATH, nomeDiagram)
     dpda.show_diagram(path=caminho_completo)
     
     return { 
                 "mensagem" : f"O diagrama DPDA foi gerado com sucesso. Veja em '{caminho_completo}'",
             }
+
+
+
+@app.get("/read_json/")
+def read_json_of_automatas():
+    if os.path.exists("./json"):
+        os.mkdir("./json")
+        return {"error" : "A pasta 'json' nao existe. Logo nao existe json a ser lido."}
+    
+    automataDFA = read_json("/json/DFA.json")
+    automataDPDA = read_json("/json/DPDA.json")
+    automataDTM = read_json("/json/DTM.json")
+    
+    return { "mensagem" : "Os dados do json foram lidos com sucesso."}
+
+@app.post("/save_json/")
+def write_json_of_automatas():
+    if os.path.exists("./json"):
+        os.mkdir("./json")
+    
+    write_json("./json/DFA.json", automataDFA)
+    write_json("./json/DPDA.json", automataDPDA)
+    write_json("./json/DTM.json", automataDTM)
+    
+    return { "mensagem" : "Os dados do json foram escritos com sucesso."}
+
+# Função para ler JSON
+def read_json(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as file:
+            return json.load(file)
+    return []
+
+# Função para escrever JSON
+def write_json(file_path, data):
+    with open(file_path, "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=2)

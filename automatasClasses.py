@@ -1,7 +1,7 @@
 # Turing Machine Model
 
 from pydantic import BaseModel
-from typing import Set, Tuple, Dict, List, Union
+from typing import Set, Tuple, Dict, Union
 
 class FiniteAutomataDeterministic(BaseModel):
     states: Set[str]
