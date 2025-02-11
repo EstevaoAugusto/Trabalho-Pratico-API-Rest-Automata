@@ -53,6 +53,7 @@ fastapi dev main.py
 ```
 
 A API estará disponível em: http://127.0.0.1:8000/docs
+
 Para criar e utilizar os automatos, é preciso inseri-los no formato JSON. Abaixo estão alguns exemplos.
 
 ## Exemplos em JSON
