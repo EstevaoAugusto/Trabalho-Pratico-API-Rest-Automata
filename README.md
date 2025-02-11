@@ -1,20 +1,33 @@
 # Trabalho-Pratico-API-Rest-Automata
-Trabalho Prático de Teoria da Computação: Construção de uma API REST Utilizando a Biblioteca Automata
-Projeto construido em Python.
+Trabalho prático da disciplina de Teoria da Computação, focado na construção de uma API REST para manipulação de autômatos utilizando a biblioteca Automata e o framework FastAPI
 
 O projeto deve ser entregue até 11/02/2025. 
 
 ## Bibliotecas Usadas
 
-- [Automate](https://github.com/caleb531/automata)
-- [FastAPI](https://fastapi.tiangolo.com/)
+- [Automata](https://github.com/caleb531/automata) - Biblioteca para manipulação de autômatos
+- [FastAPI](https://fastapi.tiangolo.com/) - Framework para criação de APIs rápidas e eficientes
 
 ## Instalação
 
+#### Clonagem do Repositório
 ```
 git clone git@github.com:EstevaoAugusto/Trabalho-Pratico-API-Rest-Automata.git
 cd Trabalho-Pratico-API-Rest-Automata
+```
+
+#### Criando e ativando o ambiente virtual
+
+```
 python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# No Windows:
+# .venv\Scripts\activate
+```
+
+#### Instalando dependencias
+
+```
 pip install "fastapi[standard]"
 pip install 'automata-lib[visual]'
 ```
@@ -32,10 +45,20 @@ python -m pip install --config-settings="--global-option=build_ext" --config-set
 
 Detalhes foram obtidas na [documentaçao do Pygraphviz](https://pygraphviz.github.io/documentation/stable/install.html#windows).
 
+#### Executando a API
+
+Para iniciar o servidor FastAPI, execute:
+```
+fastapi dev main.py
+```
+
+A API estará disponível em: http://127.0.0.1:8000/docs
+
 ## Exemplos em JSON
 
 
 ### Automato Finito Deterministico (AFD)
+AFD que aceita (ou rejeita) strings binárias terminadas em um número ímpar de '1's
 
 ```json
 {
@@ -61,6 +84,7 @@ Detalhes foram obtidas na [documentaçao do Pygraphviz](https://pygraphviz.githu
 ```
 
 ### Automato com Pilha Deterministica (APD)
+APD que aceita (ou rejeita) strings com zero ou mais 'a's, seguido pelo mesmo número de 'b's (aceitando pelo estado final).
 
 ```json
 {
@@ -98,6 +122,7 @@ Detalhes foram obtidas na [documentaçao do Pygraphviz](https://pygraphviz.githu
 ```
 
 ### Maquina de Turing Deterministica (MTD)
+MTD que aceita (ou rejeita) strings que começam com '0' e seguidas pelo mesmo número de '1'
 
 ```json
 {
