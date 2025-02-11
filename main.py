@@ -356,19 +356,19 @@ def create_diagram_of_pushdown_automata(nomeDiagram : str = "automatoComPilha.pn
 
 @app.get("/read_json/")
 def read_json_of_automatas():
-    if os.path.exists("./json"):
+    if not os.path.exists("./json"):
         os.mkdir("./json")
         return {"error" : "A pasta 'json' nao existe. Logo nao existe json a ser lido."}
     
     automataDFA = read_json("/json/DFA.json")
     automataDPDA = read_json("/json/DPDA.json")
     automataDTM = read_json("/json/DTM.json")
-    
+        
     return { "mensagem" : "Os dados do json foram lidos com sucesso."}
 
 @app.post("/save_json/")
 def write_json_of_automatas():
-    if os.path.exists("./json"):
+    if not os.path.exists("./json"):
         os.mkdir("./json")
     
     write_json("./json/DFA.json", automataDFA)
@@ -382,9 +382,42 @@ def read_json(file_path):
     if os.path.exists(file_path):
         with open(file_path, "r", encoding="utf-8") as file:
             return json.load(file)
-    return []
+    return {}
 
 # Função para escrever JSON
 def write_json(file_path, data):
     with open(file_path, "w", encoding="utf-8") as file:
-        json.dump(data, file, indent=2)
+        json.dump(data, file, indent=2, default=to_dict(data))
+
+def to_dict(obj):
+    if isinstance(obj, DTM):
+        return {
+            "states" : obj.states,
+            "input_symbols" : obj.input_symbols,
+            "tape_symbols" : obj.tape_symbols,
+            "transitions" : obj.transitions,
+            "initial_state" : obj.initial_state,
+            "blank_symbol" : obj.blank_symbol,
+            "final_states" : obj.final_states,
+        }
+    elif isinstance(obj, DPDA):
+        return {
+            "states" : obj.states,
+            "input_symbols" : obj.input_symbols,
+            "stack_symbols" : obj.stack_symbols,
+            "transitions" : obj.transitions,
+            "initial_state" : obj.initial_state,
+            "initial_state_symbol" : obj.initial_stack_symbol,
+            "final_states" : obj.final_states,
+            "acceptance_mode" : obj.acceptance_mode,
+        }
+    elif isinstance(obj, DFA):
+        return {
+            "states": obj.states,
+            "input_symbols": obj.input_symbols,
+            "transitions": obj.transitions,
+            "initial_state": obj.initial_state,
+            "final_states": obj.final_states
+        }
+    else:
+        raise TypeError(f"Tipo {type(obj)} não serializável para JSON.")
