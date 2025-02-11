@@ -16,13 +16,10 @@ git clone git@github.com:EstevaoAugusto/Trabalho-Pratico-API-Rest-Automata.git
 cd Trabalho-Pratico-API-Rest-Automata
 ```
 
-#### Criando e ativando o ambiente virtual
+#### Criando o ambiente virtual
 
 ```
 python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
-# No Windows:
-# .venv\Scripts\activate
 ```
 
 #### Instalando dependencias
